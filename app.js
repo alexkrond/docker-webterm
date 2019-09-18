@@ -14,14 +14,30 @@ app.get("/admin", (req, res) => {
   res.json(sessions.map(session => session.id));
 });
 
+app.get("/kill/:id", (req, res) => {
+  sessions = sessions.filter(session => {
+    if (session.id === req.params.id) {
+
+      session.shell.write("exit\r");
+      session.shell.kill();
+      session.ws.terminate();
+
+      return false;
+    }
+    return true;
+  });
+
+  res.json(sessions.map(session => session.id));
+});
+
 app.use(express.static(__dirname));
 
 let sessions = [];
 
 expressWs.app.ws('/shell', (ws, req) => {
-  const shell = pty.spawn('/bin/bash', [], {
+  // const shell = pty.spawn('/bin/bash', [], {
   // const shell = pty.spawn('/usr/bin/docker', ["run", "-it", "-v", "/var/run/docker.sock:/var/run/docker.sock", "nginx", "bash"], {
-  // const shell = pty.spawn('/usr/bin/docker', ["run", "-itd", "nginx", "bash"], {
+  const shell = pty.spawn('/usr/bin/docker', ["run", "-it", "nginx", "bash"], {
     name: 'xterm-color',
     cwd: process.env.PWD,
     env: process.env
@@ -42,8 +58,9 @@ expressWs.app.ws('/shell', (ws, req) => {
   });
 
   const newSession = {
-    id: uuid.v4(),
+    id: uuid.v1(),
     shell: shell,
+    ws: ws
   };
 
   sessions.push(newSession);
@@ -51,7 +68,7 @@ expressWs.app.ws('/shell', (ws, req) => {
 
 process.on("SIGINT", () => {
   // shells.forEach(shell => shell.write("exit\r"));
-  shells.forEach(shell => shell.kill());
+  sessions.forEach(session => session.shell.kill());
   process.exit();
 });
 
