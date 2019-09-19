@@ -1,36 +1,16 @@
 const express = require("express");
-const uuid = require("uuid");
+const {routerInit} = require("./routes/api/shell.js");
+const {killSession} = require("./shellLib.js");
 const pty = require("node-pty");
 
 const app = express();
 const expressWs = require('express-ws')(app);
 
 
-app.get("/", (req, res) => {
+app.get("/shell", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
 
-app.get("/admin", (req, res) => {
-  res.json(sessions.map(session => session.id));
-});
-
-app.get("/kill/:id", (req, res) => {
-  sessions = sessions.filter(session => {
-    if (session.id === req.params.id) {
-
-      session.shell.write("exit\r");
-      session.shell.kill();
-      session.ws.terminate();
-
-      return false;
-    }
-    return true;
-  });
-
-  res.json(sessions.map(session => session.id));
-});
-
-app.use(express.static(__dirname));
 
 let sessions = [];
 
@@ -49,6 +29,7 @@ expressWs.app.ws('/shell', (ws, req) => {
   // shell.write("docker run -itd --name hi nginx\r");
   // shell.write("docker exec -it hi bash\r");
 
+
   shell.on('data', (data) => {
     ws.send(data);
   });
@@ -58,16 +39,30 @@ expressWs.app.ws('/shell', (ws, req) => {
   });
 
   const newSession = {
-    id: uuid.v1(),
+    id: shell._pid.toString(),
     shell: shell,
     ws: ws
   };
 
+  ws.on("close", () => {
+    console.log(`${newSession.id}: ws close`);
+    killSession(sessions, newSession.id);
+  });
+
+  shell.on("exit", () => {
+    console.log(`${newSession.id}: exit`);
+    killSession(sessions, newSession.id);
+  });
+
   sessions.push(newSession);
 });
 
+
+app.use(express.static(__dirname));
+app.use("/shell", routerInit(sessions));
+
+
 process.on("SIGINT", () => {
-  // shells.forEach(shell => shell.write("exit\r"));
   sessions.forEach(session => session.shell.kill());
   process.exit();
 });
