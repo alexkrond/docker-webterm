@@ -25,13 +25,13 @@ function killContainer(id) {
   return new Promise((resolve, reject) => {
     const shell = getBashShell();
     const cmd = `docker kill ${id}\r`;
-    const numberOfOutputLines = 5;
+    const numberOfOutputLines = 4;
     let linesCounter = 0;
 
     shell.on("data", async data => {
       linesCounter++;
 
-      if (linesCounter === numberOfOutputLines) {
+      if (linesCounter > numberOfOutputLines) {
         shell.kill();
 
         const containers = await getContainers();
