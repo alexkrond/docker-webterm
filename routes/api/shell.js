@@ -1,6 +1,5 @@
 const express = require("express");
 const {killSession, killContainer, getContainers, runContainer} = require("../../shellLib.js");
-const pty = require("node-pty");
 
 
 function routerInit(sessions) {
