@@ -1,60 +1,43 @@
 const express = require("express");
+const exphbs = require("express-handlebars");
 const {routerInit} = require("./routes/api/shell.js");
-const {killSession} = require("./shellLib.js");
-const pty = require("node-pty");
+const {startSession, containerAttach, getContainers} = require("./shellLib.js");
 
 const app = express();
 const expressWs = require('express-ws')(app);
 
 
 app.get("/shell", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+  res.render("index");
+});
+
+app.get("/shell/containers/attach/:id", async (req, res) => {
+  const containers = await getContainers();
+
+  if (containers.some(cont => cont.CONTAINER_ID === req.params.id)) {
+    res.render("index");
+  } else {
+    res.json({status: "false", msg: `No container with id ${req.params.id}.`});
+  }
 });
 
 
 let sessions = [];
 
 expressWs.app.ws('/shell', (ws, req) => {
-  const shell = pty.spawn('/usr/bin/docker', ["run", "-it", "nginx", "bash"], {
-    name: 'xterm-color',
-    cwd: process.env.PWD,
-    env: process.env
-  });
-
-  // shell.write("docker build -t test ./ | tee build.log\r");
-  // shell.write("echo 'Логи в ./build.log'\r");
-  // shell.write("nano build.log");
-  // shell.write("docker run -itd --name hi nginx\r");
-  // shell.write("docker exec -it hi bash\r");
-
-
-  shell.on('data', (data) => {
-    ws.send(data);
-  });
-
-  ws.on('message', (msg) => {
-    shell.write(msg);
-  });
-
-  const newSession = {
-    id: shell._pid.toString(),
-    shell: shell,
-    ws: ws
-  };
-
-  ws.on("close", () => {
-    console.log(`${newSession.id}: ws close`);
-    killSession(sessions, newSession.id);
-  });
-
-  shell.on("exit", () => {
-    console.log(`${newSession.id}: exit`);
-    killSession(sessions, newSession.id);
-  });
-
-  sessions.push(newSession);
+  startSession(ws, sessions, "/usr/bin/docker", ["run", "-it", "nginx", "bash"]);
 });
 
+expressWs.app.ws('/shell/containers/attach/:id', (ws, req) => {
+  containerAttach(ws, sessions, req.params.id);
+});
+
+
+app.engine("handlebars", exphbs({defaultLayout: "main"}));
+app.set("view engine", "handlebars");
+
+app.use(express.json());
+app.use(express.urlencoded({extended: false}));
 
 app.use(express.static(__dirname));
 app.use("/shell", routerInit(sessions));
