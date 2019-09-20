@@ -15,8 +15,6 @@ app.get("/shell", (req, res) => {
 let sessions = [];
 
 expressWs.app.ws('/shell', (ws, req) => {
-  // const shell = pty.spawn('/bin/bash', [], {
-  // const shell = pty.spawn('/usr/bin/docker', ["run", "-it", "-v", "/var/run/docker.sock:/var/run/docker.sock", "nginx", "bash"], {
   const shell = pty.spawn('/usr/bin/docker', ["run", "-it", "nginx", "bash"], {
     name: 'xterm-color',
     cwd: process.env.PWD,
