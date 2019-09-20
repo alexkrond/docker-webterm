@@ -1,5 +1,5 @@
 const express = require("express");
-const {killSession, killContainer, getContainers} = require("../../shellLib.js");
+const {killSession, killContainer, getContainers, runContainer} = require("../../shellLib.js");
 const pty = require("node-pty");
 
 
@@ -10,40 +10,39 @@ function routerInit(sessions) {
     res.json(sessions.map(session => session.id));
   });
 
+  router.get("/containers", async (req, res) => {
+    const containers = await getContainers().catch(err => console.log(err));
+    res.json(containers);
+  });
+
   router.get("/sessions/kill/:id", (req, res) => {
     if (killSession(sessions, req.params.id)) {
-      res.json({msg: `Terminal with pid ${req.params.id} was killed.`});
+      res.json({status: "OK", msg: `Terminal with pid ${req.params.id} was killed.`});
     } else {
-      res.json({msg: `No terminal with pid ${req.params.id}.`});
+      res.json({status: "false", msg: `No terminal with pid ${req.params.id}.`});
     }
   });
 
   router.get("/containers/kill/:id", async (req, res) => {
-    const shell = pty.spawn('/bin/bash', [], {
-      name: 'xterm-color',
-      cwd: process.env.PWD,
-      env: process.env
-    });
-
-    const isKilled = await killContainer(shell, req.params.id);
+    const isKilled = await killContainer(req.params.id);
 
     if (isKilled) {
-      res.json({msg: `Container with id ${req.params.id} was killed.`});
+      res.json({status: "OK", msg: `Container with id ${req.params.id} was killed.`});
     } else {
-      res.json({msg: `No container with id ${req.params.id}.`});
+      res.json({status: "false", msg: `Container with id ${req.params.id} was not killed.`});
     }
   });
 
-  router.get("/containers", async (req, res) => {
-    const shell = pty.spawn('/bin/bash', [], {
-      name: 'xterm-color',
-      cwd: process.env.PWD,
-      env: process.env
-    });
+  router.get("/containers/run/:image", async (req, res) => {
+    const isRunning = await runContainer(req.params.image);
 
-    const containers = await getContainers(shell).catch(err => console.log(err));
-    res.json(containers);
+    if (isRunning) {
+      res.json({status: "OK", msg: `Container with image ${req.params.image} was created.`});
+    } else {
+      res.json({status: "false", msg: `Container with image ${req.params.image} was not created.`});
+    }
   });
+
 
   return router;
 }
