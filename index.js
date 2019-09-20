@@ -7,7 +7,7 @@ term.open(document.getElementById('terminal'));
 
 const protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://';
 const port = location.port ? `:${location.port}` : '';
-const socketUrl = `${protocol}${location.hostname}${port}/shell`;
+const socketUrl = `${protocol}${location.hostname}${port}${location.pathname}`;
 const socket = new WebSocket(socketUrl);
 
 socket.onclose = () => {
@@ -22,5 +22,3 @@ socket.onclose = () => {
 
 const attachAddon = new AttachAddon(socket);
 term.loadAddon(attachAddon);
-
-// term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ');
