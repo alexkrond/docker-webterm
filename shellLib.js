@@ -23,13 +23,14 @@ function killSession(sessions, id) {
 
 function killContainer(id) {
   return new Promise((resolve, reject) => {
-    const shell = getBashShell();
+    const shell = getBashShell("/bin/bash");
     const cmd = `docker kill ${id}\r`;
     const numberOfOutputLines = 4;
     let linesCounter = 0;
 
     shell.on("data", async data => {
       linesCounter++;
+      console.log(linesCounter);
 
       if (linesCounter > numberOfOutputLines) {
         shell.kill();
@@ -51,7 +52,7 @@ function killContainer(id) {
 
 function getContainers() {
   return new Promise((resolve, reject) => {
-    const shell = getBashShell();
+    const shell = getBashShell("/bin/bash");
     const fileId = uuid.v4();
     const path = __dirname + `/.containers_${fileId}.txt`;
     const cmd = `docker ps > ${path}\r`;
@@ -97,12 +98,7 @@ function getContainers() {
 
 function runContainer(image) {
   return new Promise((resolve, reject) => {
-    const shell = pty.spawn('/usr/bin/docker', ["run", "-itd", image], {
-      name: 'xterm-color',
-      cwd: process.env.PWD,
-      env: process.env
-    });
-
+    const shell = getBashShell("/usr/bin/docker", ["run", "-itd", image]);
     const regExp = /^([a-z]|\d){64}$/;
     const idLength = 64;
     const secForCreating = 3;
@@ -144,8 +140,48 @@ function runContainer(image) {
 }
 
 
-function getBashShell() {
-  const shell = pty.spawn('/bin/bash', [], {
+function containerAttach(ws, sessions, id) {
+  startSession(ws, sessions, "/usr/bin/docker", ["exec", "-it", id, "bash"]);
+}
+
+
+function startSession(ws, sessions, file, args = []) {
+  const shell = getBashShell(file, args);
+
+  // shell.write("docker build -t test ./ | tee build.log\r");
+  // shell.write("echo 'Логи в ./build.log'\r");
+  // shell.write("nano build.log");
+
+  shell.on('data', (data) => {
+    ws.send(data);
+  });
+
+  ws.on('message', (msg) => {
+    shell.write(msg);
+  });
+
+  const newSession = {
+    id: shell._pid.toString(),
+    shell: shell,
+    ws: ws
+  };
+
+  ws.on("close", () => {
+    console.log(`${newSession.id}: ws close`);
+    killSession(sessions, newSession.id);
+  });
+
+  shell.on("exit", () => {
+    console.log(`${newSession.id}: exit`);
+    killSession(sessions, newSession.id);
+  });
+
+  sessions.push(newSession);
+}
+
+
+function getBashShell(file, args = []) {
+  const shell = pty.spawn(file, args, {
     name: 'xterm-color',
     cwd: process.env.PWD,
     env: process.env
@@ -159,3 +195,5 @@ module.exports.killSession = killSession;
 module.exports.killContainer = killContainer;
 module.exports.getContainers = getContainers;
 module.exports.runContainer = runContainer;
+module.exports.startSession = startSession;
+module.exports.containerAttach = containerAttach;
