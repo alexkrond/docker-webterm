@@ -1,3 +1,5 @@
+const pty = require("node-pty");
+const uuid = require("uuid");
 const fs = require("fs");
 
 function killSession(sessions, id) {
@@ -19,8 +21,10 @@ function killSession(sessions, id) {
 }
 
 
-function killContainer(shell, id) {
+function killContainer(id) {
   return new Promise((resolve, reject) => {
+    const shell = getBashShell();
+    const cmd = `docker kill ${id}\r`;
     const numberOfOutputLines = 5;
     let linesCounter = 0;
 
@@ -28,7 +32,9 @@ function killContainer(shell, id) {
       linesCounter++;
 
       if (linesCounter === numberOfOutputLines) {
-        const containers = await getContainers(shell);
+        shell.kill();
+
+        const containers = await getContainers();
 
         if (containers.some(cont => cont.CONTAINER_ID === id)) {
           resolve(false);
@@ -38,14 +44,17 @@ function killContainer(shell, id) {
       }
     });
 
-    shell.write(`docker kill ${id}\r`);
+    shell.write(cmd);
   });
 }
 
 
-function getContainers(shell) {
+function getContainers() {
   return new Promise((resolve, reject) => {
-    const path = __dirname + "/.cont.txt";
+    const shell = getBashShell();
+    const fileId = uuid.v4();
+    const path = __dirname + `/.containers_${fileId}.txt`;
+    const cmd = `docker ps > ${path}\r`;
 
     shell.on("data", data => {
       fs.access(path, fs.F_OK, err => {
@@ -81,11 +90,72 @@ function getContainers(shell) {
       });
     });
 
-    shell.write(`docker ps > ${path}\r`);
+    shell.write(cmd);
   });
+}
+
+
+function runContainer(image) {
+  return new Promise((resolve, reject) => {
+    const shell = pty.spawn('/usr/bin/docker', ["run", "-itd", image], {
+      name: 'xterm-color',
+      cwd: process.env.PWD,
+      env: process.env
+    });
+
+    const regExp = /^([a-z]|\d){64}$/;
+    const idLength = 64;
+    const secForCreating = 3;
+    let inProgress = false;
+    let interval;
+    let timeStamp;
+    let id;
+
+    shell.on("data", async data => {
+      const str = data.replace("\r\n", "");
+
+      if (str.length === idLength && regExp.test(str) && !inProgress) {
+        id = str.substr(0, 12);
+
+        timeStamp = new Date();
+        timeStamp.setSeconds(timeStamp.getSeconds() + secForCreating);
+
+        inProgress = true;
+        interval = setInterval(check, 500);
+      }
+
+      async function check() {
+        if (new Date() > timeStamp) {
+          clearInterval(interval);
+          shell.kill();
+          resolve(false);
+        }
+
+        const containers = await getContainers();
+
+        if (containers.some(cont => cont.CONTAINER_ID === id)) {
+          clearInterval(interval);
+          shell.kill();
+          resolve(true);
+        }
+      }
+    });
+  });
+}
+
+
+function getBashShell() {
+  const shell = pty.spawn('/bin/bash', [], {
+    name: 'xterm-color',
+    cwd: process.env.PWD,
+    env: process.env
+  });
+
+  return shell;
 }
 
 
 module.exports.killSession = killSession;
 module.exports.killContainer = killContainer;
 module.exports.getContainers = getContainers;
+module.exports.runContainer = runContainer;
