@@ -1,5 +1,5 @@
 const express = require("express");
-const {killSession, killContainer, getContainers, runContainer} = require("../../shellLib.js");
+const {killSession, killContainer, getContainers, runContainer, getImages} = require("../../shellLib.js");
 
 
 function routerInit(sessions) {
@@ -12,6 +12,11 @@ function routerInit(sessions) {
   router.get("/containers", async (req, res) => {
     const containers = await getContainers().catch(err => console.log(err));
     res.json(containers);
+  });
+
+  router.get("/images", async (req, res) => {
+    const images = await getImages().catch(err => console.log(err));
+    res.json(images);
   });
 
   router.get("/sessions/kill/:id", (req, res) => {
