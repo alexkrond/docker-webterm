@@ -107,6 +107,30 @@
 
     imagesList.appendChild(imageUL);
   });
+
+
+
+  const dockerfilesList = document.querySelector(".dockerfiles-list");
+  const dockerfiles = ["Dockerfile_test"];
+
+  if (dockerfiles.length === 0) {
+    dockerfilesList.textContent = "Инструкции отсутствуют";
+  }
+
+  dockerfiles.forEach(dockerfile => {
+    const dockerfilesLI = document.createElement("li");
+    const buildBtn = document.createElement("button");
+
+    buildBtn.style.marginLeft = "20px";
+    buildBtn.textContent = "Собрать";
+
+    dockerfilesLI.textContent = dockerfile;
+
+    buildBtn.onclick = buildImage("test");
+
+    dockerfilesLI.appendChild(buildBtn);
+    dockerfilesList.appendChild(dockerfilesLI);
+  });
 })();
 
 
@@ -167,5 +191,11 @@ function runContainer(image) {
 function containerAttach(id) {
   return () => {
     window.open(`/shell/containers/attach/${id}`);
+  };
+}
+
+function buildImage(name) {
+  return () => {
+    window.open(`/shell/images/build/${name}`);
   };
 }
