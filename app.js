@@ -1,7 +1,7 @@
 const express = require("express");
 const exphbs = require("express-handlebars");
 const {routerInit} = require("./routes/api/shell.js");
-const {startSession, containerAttach, getContainers} = require("./shellLib.js");
+const {startSession, containerAttach, getContainers, buildImage} = require("./shellLib.js");
 
 const app = express();
 const expressWs = require('express-ws')(app);
@@ -21,6 +21,10 @@ app.get("/shell/containers/attach/:id", async (req, res) => {
   }
 });
 
+app.get("/shell/containers/build/:name", (req, res) => {
+  res.render("index");
+});
+
 
 let sessions = [];
 
@@ -30,6 +34,10 @@ expressWs.app.ws('/shell', (ws, req) => {
 
 expressWs.app.ws('/shell/containers/attach/:id', (ws, req) => {
   containerAttach(ws, sessions, req.params.id);
+});
+
+expressWs.app.ws('/shell/containers/build/:name', (ws, req) => {
+  buildImage(ws, sessions, req.params.name);
 });
 
 

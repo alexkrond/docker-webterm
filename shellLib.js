@@ -145,7 +145,28 @@ function containerAttach(ws, sessions, id) {
 }
 
 
-function startSession(ws, sessions, file, args = []) {
+function buildImage(ws, sessions, name) {
+  const logFileName = `BUILD_${name}_${Date.now()}.log`;
+
+  const shellOnExit = () => {
+    console.log(`${session.id}: exit`)
+  };
+
+  const session = startSession(
+      ws,
+      sessions,
+      "/usr/bin/docker",
+      ["build", "-f", "Dockerfile_test", "-t", name, "./"],
+      shellOnExit);
+
+  session.shell.on("data", data => {
+    fs.appendFile(logFileName, data, () => {
+    });
+  });
+}
+
+
+function startSession(ws, sessions, file, args, shellOnExit) {
   const shell = getBashShell(file, args);
 
   // shell.write("docker build -t test ./ | tee build.log\r");
@@ -171,12 +192,14 @@ function startSession(ws, sessions, file, args = []) {
     killSession(sessions, newSession.id);
   });
 
-  shell.on("exit", () => {
+  shell.on("exit", shellOnExit || (() => {
     console.log(`${newSession.id}: exit`);
     killSession(sessions, newSession.id);
-  });
+  }));
 
   sessions.push(newSession);
+
+  return newSession;
 }
 
 
@@ -197,3 +220,4 @@ module.exports.getContainers = getContainers;
 module.exports.runContainer = runContainer;
 module.exports.startSession = startSession;
 module.exports.containerAttach = containerAttach;
+module.exports.buildImage = buildImage;
