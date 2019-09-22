@@ -146,7 +146,7 @@ function containerAttach(ws, sessions, id) {
 
 
 function buildImage(ws, sessions, name) {
-  const logFileName = `BUILD_${name}_${Date.now()}.log`;
+  const logFileName = `./logs/BUILD_${name}_${Date.now()}.log`;
 
   const shellOnExit = () => {
     console.log(`${session.id}: exit`)
