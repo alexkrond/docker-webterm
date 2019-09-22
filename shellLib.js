@@ -96,9 +96,14 @@ function getContainers() {
 }
 
 
-function runContainer(image) {
-  return new Promise((resolve, reject) => {
-    const shell = getBashShell("/usr/bin/docker", ["run", "-itd", image]);
+function runContainer(imageName) {
+  return new Promise(async (resolve, reject) => {
+    const images = await getImages();
+    if (!images.some(image => image.REPOSITORY === imageName)) {
+      resolve(false);
+    }
+
+    const shell = getBashShell("/usr/bin/docker", ["run", "-itd", imageName]);
     const regExp = /^([a-z]|\d){64}$/;
     const idLength = 64;
     const secForCreating = 3;
@@ -142,6 +147,52 @@ function runContainer(image) {
 
 function containerAttach(ws, sessions, id) {
   startSession(ws, sessions, "/usr/bin/docker", ["exec", "-it", id, "bash"]);
+}
+
+
+function getImages() {
+  return new Promise((resolve, reject) => {
+    const shell = getBashShell("/bin/bash");
+    const fileId = uuid.v4();
+    const path = __dirname + `/.images_${fileId}.txt`;
+    const cmd = `docker images > ${path}\r`;
+
+    shell.on("data", data => {
+      fs.access(path, fs.F_OK, err => {
+        if (err) return;
+
+        shell.kill();
+
+        fs.readFile(path, 'utf8', (err, data) => {
+          if (err) reject(err);
+
+          fs.unlink(path, err => {
+            if (err) reject(err);
+          });
+
+          let images = data.split("\n").slice(1, -1);
+          images = images.map(c => {
+            let image = c.split(/\s\s+/);
+            image = {
+              REPOSITORY: image[0],
+              TAG: image[1],
+              IMAGE_ID: image[2],
+              CREATED: image[3],
+              SIZE: image[4]
+            };
+
+            return image;
+          });
+
+          console.log(images);
+
+          resolve(images);
+        });
+      });
+    });
+
+    shell.write(cmd);
+  });
 }
 
 
@@ -221,3 +272,4 @@ module.exports.runContainer = runContainer;
 module.exports.startSession = startSession;
 module.exports.containerAttach = containerAttach;
 module.exports.buildImage = buildImage;
+module.exports.getImages = getImages;
