@@ -25,7 +25,7 @@ app.get("/shell/containers/attach/:id", async (req, res) => {
   }
 });
 
-app.get("/shell/containers/build/:name", (req, res) => {
+app.get("/shell/images/build/:name", (req, res) => {
   res.render("index");
 });
 
@@ -40,7 +40,7 @@ expressWs.app.ws('/shell/containers/attach/:id', (ws, req) => {
   containerAttach(ws, sessions, req.params.id);
 });
 
-expressWs.app.ws('/shell/containers/build/:name', (ws, req) => {
+expressWs.app.ws('/shell/images/build/:name', (ws, req) => {
   buildImage(ws, sessions, req.params.name);
 });
 
