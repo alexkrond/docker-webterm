@@ -1,5 +1,16 @@
-(async () => {
+update().then(() => setInterval(update, 20000));
+
+async function update() {
+  await updateSessionsList();
+  await updateContainersList();
+  await updateImagesList();
+  await updateDockerfilesList();
+}
+
+
+async function updateSessionsList() {
   const sessionsList = document.querySelector(".sessions-list");
+  sessionsList.innerHTML = "";
   const sessions = await getSessions();
 
   if (sessions.length === 0) {
@@ -20,10 +31,11 @@
 
     sessionsList.appendChild(li);
   });
+}
 
-
-
+async function updateContainersList() {
   const containersList = document.querySelector(".containers-list");
+  containersList.innerHTML = "";
   const containers = await getContainers();
 
   if (containers.length === 0) {
@@ -59,10 +71,11 @@
 
     containersList.appendChild(containerUL);
   });
+}
 
-
-
+async function updateImagesList() {
   const imagesList = document.querySelector(".images-list");
+  imagesList.innerHTML = "";
   const images = await getImages();
 
   if (images.length === 0) {
@@ -84,14 +97,14 @@
 
     runBtn.onclick = async () => {
       await runContainer(image.REPOSITORY)();
-      location.reload();
+      await updateContainersList();
     };
     runAndAttachBtn.onclick = async () => {
       const id = await runContainer(image.REPOSITORY)();
       if (!id) return;
 
       containerAttach(id)();
-      location.reload();
+      await updateContainersList();
     };
 
     imageUL.appendChild(runBtn);
@@ -107,10 +120,11 @@
 
     imagesList.appendChild(imageUL);
   });
+}
 
-
-
+async function updateDockerfilesList() {
   const dockerfilesList = document.querySelector(".dockerfiles-list");
+  dockerfilesList.innerHTML = "";
   const dockerfiles = ["Dockerfile_test"];
 
   if (dockerfiles.length === 0) {
@@ -131,10 +145,7 @@
     dockerfilesLI.appendChild(buildBtn);
     dockerfilesList.appendChild(dockerfilesLI);
   });
-})();
-
-
-
+}
 
 
 async function getSessions() {
@@ -164,14 +175,16 @@ async function getImages() {
 function killSession(id) {
   return async () => {
     const data = await fetch(`/shell/sessions/kill/${id}`);
-    location.reload();
+    await updateSessionsList();
+    await updateContainersList();
   };
 }
 
 function killContainer(id) {
   return async () => {
     const data = await fetch(`/shell/containers/kill/${id}`);
-    location.reload();
+    await updateSessionsList();
+    await updateContainersList();
   };
 }
 
