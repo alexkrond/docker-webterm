@@ -59,6 +59,54 @@
 
     containersList.appendChild(containerUL);
   });
+
+
+
+  const imagesList = document.querySelector(".images-list");
+  const images = await getImages();
+
+  if (images.length === 0) {
+    imagesList.textContent = "Образы отсутствуют";
+  }
+
+  images.forEach(image => {
+    const imageUL = document.createElement("ul");
+    const runBtn = document.createElement("button");
+    const runAndAttachBtn = document.createElement("button");
+
+    imageUL.style.marginTop = "10px";
+    imageUL.style.marginBottom = "30px";
+    runBtn.style.marginLeft = "20px";
+    runAndAttachBtn.style.marginLeft = "20px";
+
+    runBtn.textContent = "Запустить";
+    runAndAttachBtn.textContent = "Запустить и подключиться";
+
+    runBtn.onclick = async () => {
+      await runContainer(image.REPOSITORY)();
+      location.reload();
+    };
+    runAndAttachBtn.onclick = async () => {
+      const id = await runContainer(image.REPOSITORY)();
+      if (!id) return;
+
+      containerAttach(id)();
+      location.reload();
+    };
+
+    imageUL.appendChild(runBtn);
+    imageUL.appendChild(runAndAttachBtn);
+
+    for (let info in image) {
+      if (image.hasOwnProperty(info)) {
+        const li = document.createElement("li");
+        li.textContent = `${info}: ${image[info]}`;
+        imageUL.appendChild(li);
+      }
+    }
+
+    imagesList.appendChild(imageUL);
+  });
 })();
 
 
@@ -73,14 +121,6 @@ async function getSessions() {
   return sessions;
 }
 
-function killSession(id) {
-  return async () => {
-    const data = await fetch(`/shell/sessions/kill/${id}`);
-    location.reload();
-  };
-}
-
-
 async function getContainers() {
   const data = await fetch("/shell/containers")
       .catch(err => console.log(err));
@@ -89,9 +129,18 @@ async function getContainers() {
   return containers;
 }
 
-function containerAttach(id) {
-  return () => {
-    window.open(`/shell/containers/attach/${id}`);
+async function getImages() {
+  const data = await fetch("/shell/images")
+      .catch(err => console.log(err));
+  const images = await data.json();
+
+  return images;
+}
+
+function killSession(id) {
+  return async () => {
+    const data = await fetch(`/shell/sessions/kill/${id}`);
+    location.reload();
   };
 }
 
@@ -99,5 +148,24 @@ function killContainer(id) {
   return async () => {
     const data = await fetch(`/shell/containers/kill/${id}`);
     location.reload();
+  };
+}
+
+function runContainer(image) {
+  return async () => {
+    const data = await fetch(`/shell/containers/run/${image}`);
+    const body = await data.json();
+
+    if (body.status === "OK") {
+      return body.id;
+    } else {
+      return alert("Контейнер не запущен");
+    }
+  };
+}
+
+function containerAttach(id) {
+  return () => {
+    window.open(`/shell/containers/attach/${id}`);
   };
 }
