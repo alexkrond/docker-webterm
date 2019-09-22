@@ -137,7 +137,7 @@ function runContainer(imageName) {
         if (containers.some(cont => cont.CONTAINER_ID === id)) {
           clearInterval(interval);
           shell.kill();
-          resolve(true);
+          resolve(id);
         }
       }
     });

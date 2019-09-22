@@ -38,9 +38,9 @@ function routerInit(sessions) {
   });
 
   router.get("/containers/run/:image", async (req, res) => {
-    const isRunning = await runContainer(req.params.image);
+    const id = await runContainer(req.params.image);
 
-    if (isRunning) {
+    if (id) {
       res.json({status: "OK", msg: `Container with image ${req.params.image} was created.`});
     } else {
       res.json({status: "false", msg: `Container with image ${req.params.image} was not created.`});
