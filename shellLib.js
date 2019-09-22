@@ -184,8 +184,6 @@ function getImages() {
             return image;
           });
 
-          console.log(images);
-
           resolve(images);
         });
       });
@@ -200,7 +198,8 @@ function buildImage(ws, sessions, name) {
   const logFileName = `./logs/BUILD_${name}_${Date.now()}.log`;
 
   const shellOnExit = () => {
-    console.log(`${session.id}: exit`)
+    console.log(`${session.id}: exit`);
+    ws.send(`\nЛоги также лежат в файле ${logFileName}`);
   };
 
   const session = startSession(
