@@ -41,7 +41,7 @@ function routerInit(sessions) {
     const id = await runContainer(req.params.image);
 
     if (id) {
-      res.json({status: "OK", msg: `Container with image ${req.params.image} was created.`});
+      res.json({status: "OK", id: id, msg: `Container with image ${req.params.image} was created.`});
     } else {
       res.json({status: "false", msg: `Container with image ${req.params.image} was not created.`});
     }
