@@ -7,6 +7,10 @@ const app = express();
 const expressWs = require('express-ws')(app);
 
 
+app.get("/", (req, res) => {
+  res.render("admin");
+});
+
 app.get("/shell", (req, res) => {
   res.render("index");
 });
