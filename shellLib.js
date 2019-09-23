@@ -32,7 +32,7 @@ function killContainer(id) {
       linesCounter++;
       console.log(linesCounter);
 
-      if (linesCounter > numberOfOutputLines) {
+      if (linesCounter >= numberOfOutputLines) {
         shell.kill();
 
         const containers = await getContainers();
