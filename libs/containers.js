@@ -1,24 +1,9 @@
-const pty = require("node-pty");
 const uuid = require("uuid");
 const fs = require("fs");
 
-function killSession(sessions, id) {
-  let isKilled = false;
-
-  for (let i = 0; i < sessions.length; i++) {
-    if (sessions[i] && sessions[i].id === id) {
-      sessions[i].shell.kill();
-      sessions[i].ws.terminate();
-
-      sessions.splice(i, 1);
-
-      isKilled = true;
-      break;
-    }
-  }
-
-  return isKilled;
-}
+const {getBashShell} = require("./bashShell.js");
+const {getImages} = require("./images.js");
+const {startSession} = require("./sessions.js");
 
 
 function killContainer(id) {
@@ -150,125 +135,7 @@ function containerAttach(ws, sessions, id) {
 }
 
 
-function getImages() {
-  return new Promise((resolve, reject) => {
-    const shell = getBashShell("/bin/bash");
-    const fileId = uuid.v4();
-    const path = __dirname + `/.images_${fileId}.txt`;
-    const cmd = `docker images > ${path}\r`;
-
-    shell.on("data", data => {
-      fs.access(path, fs.F_OK, err => {
-        if (err) return;
-
-        shell.kill();
-
-        fs.readFile(path, 'utf8', (err, data) => {
-          if (err) reject(err);
-
-          fs.unlink(path, err => {
-            if (err) reject(err);
-          });
-
-          let images = data.split("\n").slice(1, -1);
-          images = images.map(c => {
-            let image = c.split(/\s\s+/);
-            image = {
-              REPOSITORY: image[0],
-              TAG: image[1],
-              IMAGE_ID: image[2],
-              CREATED: image[3],
-              SIZE: image[4]
-            };
-
-            return image;
-          });
-
-          resolve(images);
-        });
-      });
-    });
-
-    shell.write(cmd);
-  });
-}
-
-
-function buildImage(ws, sessions, name) {
-  const logFileName = `./logs/BUILD_${name}_${Date.now()}.log`;
-
-  const shellOnExit = () => {
-    console.log(`${session.id}: exit`);
-    ws.send(`\nЛоги также лежат в файле ${logFileName}`);
-  };
-
-  const session = startSession(
-      ws,
-      sessions,
-      "/usr/bin/docker",
-      ["build", "-f", "Dockerfile_test", "-t", name, "./"],
-      shellOnExit);
-
-  session.shell.on("data", data => {
-    fs.appendFile(logFileName, data, () => {
-    });
-  });
-}
-
-
-function startSession(ws, sessions, file, args, shellOnExit) {
-  const shell = getBashShell(file, args);
-
-  // shell.write("docker build -t test ./ | tee build.log\r");
-  // shell.write("echo 'Логи в ./build.log'\r");
-  // shell.write("nano build.log");
-
-  shell.on('data', (data) => {
-    ws.send(data);
-  });
-
-  ws.on('message', (msg) => {
-    shell.write(msg);
-  });
-
-  const newSession = {
-    id: shell._pid.toString(),
-    shell: shell,
-    ws: ws
-  };
-
-  ws.on("close", () => {
-    console.log(`${newSession.id}: ws close`);
-    killSession(sessions, newSession.id);
-  });
-
-  shell.on("exit", shellOnExit || (() => {
-    console.log(`${newSession.id}: exit`);
-    killSession(sessions, newSession.id);
-  }));
-
-  sessions.push(newSession);
-
-  return newSession;
-}
-
-
-function getBashShell(file, args = []) {
-  const shell = pty.spawn(file, args, {
-    name: 'xterm-color',
-    cwd: process.env.PWD,
-    env: process.env
-  });
-
-  return shell;
-}
-
-
-module.exports.killSession = killSession;
 module.exports.killContainer = killContainer;
 module.exports.getContainers = getContainers;
 module.exports.runContainer = runContainer;
-module.exports.startSession = startSession;
 module.exports.containerAttach = containerAttach;
-module.exports.buildImage = buildImage;
-module.exports.getImages = getImages;

@@ -1,7 +1,11 @@
 const express = require("express");
 const exphbs = require("express-handlebars");
+
 const {routerInit} = require("./routes/api/shell.js");
-const {startSession, containerAttach, getContainers, buildImage} = require("./shellLib.js");
+const {startSession} = require("./libs/sessions.js");
+const {containerAttach, getContainers} = require("./libs/containers.js");
+const {buildImage} = require("./libs/images.js");
+
 
 const app = express();
 const expressWs = require('express-ws')(app);

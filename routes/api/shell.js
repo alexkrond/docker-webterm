@@ -1,5 +1,8 @@
 const express = require("express");
-const {killSession, killContainer, getContainers, runContainer, getImages} = require("../../shellLib.js");
+
+const {killSession} = require("../../libs/sessions.js");
+const {killContainer, getContainers, runContainer} = require("../../libs/containers.js");
+const {getImages} = require("../../libs/images.js");
 
 
 function routerInit(sessions) {
