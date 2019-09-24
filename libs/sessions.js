@@ -23,10 +23,6 @@ function killSession(sessions, id) {
 function startSession(ws, sessions, file, args, shellOnExit) {
   const shell = getShell(file, args);
 
-  // shell.write("docker build -t test ./ | tee build.log\r");
-  // shell.write("echo 'Логи в ./build.log'\r");
-  // shell.write("nano build.log");
-
   shell.on('data', (data) => {
     ws.send(data);
   });
