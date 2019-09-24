@@ -49,6 +49,7 @@ expressWs.app.ws('/shell/images/build/:name', (ws, req) => {
 });
 
 
+app.set('views', __dirname + '/views');
 app.engine("handlebars", exphbs({defaultLayout: "main"}));
 app.set("view engine", "handlebars");
 
