@@ -6,36 +6,17 @@ const dockerHosts = require("../dockerHost.config.js");
 
 function killContainer(id) {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/bin/bash");
+    const shell = getShell("/usr/bin/docker", ["kill", id]);
 
-    let cmd;
-    if (dockerHosts.current === dockerHosts.hosts["localhost"]) {
-      cmd = `docker kill ${id}\r`;
-    } else {
-      cmd = `docker -H ${dockerHosts.current.url} kill ${id}\r`;
-    }
+    shell.on("exit", async () => {
+      const containers = await getContainers();
 
-    const numberOfOutputLines = 4;
-    let linesCounter = 0;
-
-    shell.on("data", async data => {
-      linesCounter++;
-      console.log(linesCounter);
-
-      if (linesCounter >= numberOfOutputLines) {
-        shell.kill();
-
-        const containers = await getContainers();
-
-        if (containers.some(cont => cont.CONTAINER_ID === id)) {
-          resolve(false);
-        } else {
-          resolve(true);
-        }
+      if (containers.some(cont => cont.CONTAINER_ID === id)) {
+        resolve(false);
+      } else {
+        resolve(true);
       }
     });
-
-    shell.write(cmd);
   });
 }
 
