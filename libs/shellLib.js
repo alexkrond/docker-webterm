@@ -1,7 +1,7 @@
 const pty = require("node-pty");
 
 
-function getBashShell(file, args = []) {
+function getShell(file, args = []) {
   const shell = pty.spawn(file, args, {
     name: 'xterm-color',
     cwd: process.env.PWD,
@@ -12,4 +12,4 @@ function getBashShell(file, args = []) {
 }
 
 
-module.exports.getBashShell = getBashShell;
+module.exports.getShell = getShell;

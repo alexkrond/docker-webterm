@@ -1,4 +1,4 @@
-const {getBashShell} = require("./bashShell.js");
+const {getShell} = require("./shellLib.js");
 
 
 function killSession(sessions, id) {
@@ -21,7 +21,7 @@ function killSession(sessions, id) {
 
 
 function startSession(ws, sessions, file, args, shellOnExit) {
-  const shell = getBashShell(file, args);
+  const shell = getShell(file, args);
 
   // shell.write("docker build -t test ./ | tee build.log\r");
   // shell.write("echo 'Логи в ./build.log'\r");

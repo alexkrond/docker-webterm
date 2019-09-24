@@ -1,14 +1,14 @@
 const uuid = require("uuid");
 const fs = require("fs");
 
-const {getBashShell} = require("./bashShell.js");
+const {getShell} = require("./shellLib.js");
 const {getImages} = require("./images.js");
 const {startSession} = require("./sessions.js");
 
 
 function killContainer(id) {
   return new Promise((resolve, reject) => {
-    const shell = getBashShell("/bin/bash");
+    const shell = getShell("/bin/bash");
     const cmd = `docker kill ${id}\r`;
     const numberOfOutputLines = 4;
     let linesCounter = 0;
@@ -37,7 +37,7 @@ function killContainer(id) {
 
 function getContainers() {
   return new Promise((resolve, reject) => {
-    const shell = getBashShell("/bin/bash");
+    const shell = getShell("/bin/bash");
     const fileId = uuid.v4();
     const path = __dirname + `/.containers_${fileId}.txt`;
     const cmd = `docker ps > ${path}\r`;
@@ -88,7 +88,7 @@ function runContainer(imageName) {
       resolve(false);
     }
 
-    const shell = getBashShell("/usr/bin/docker", ["run", "-itd", imageName]);
+    const shell = getShell("/usr/bin/docker", ["run", "-itd", imageName]);
     const regExp = /^([a-z]|\d){64}$/;
     const idLength = 64;
     const secForCreating = 3;
