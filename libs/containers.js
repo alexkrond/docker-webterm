@@ -1,6 +1,3 @@
-const uuid = require("uuid");
-const fs = require("fs");
-
 const {getShell} = require("./shellLib.js");
 const {getImages} = require("./images.js");
 const {startSession} = require("./sessions.js");
@@ -9,88 +6,49 @@ const dockerHosts = require("../dockerHost.config.js");
 
 function killContainer(id) {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/bin/bash");
+    const shell = getShell("/usr/bin/docker", ["kill", id]);
 
-    let cmd;
-    if (dockerHosts.current === dockerHosts.hosts["localhost"]) {
-      cmd = `docker kill ${id}\r`;
-    } else {
-      cmd = `docker -H ${dockerHosts.current.url} kill ${id}\r`;
-    }
+    shell.on("exit", async () => {
+      const containers = await getContainers();
 
-    const numberOfOutputLines = 4;
-    let linesCounter = 0;
-
-    shell.on("data", async data => {
-      linesCounter++;
-      console.log(linesCounter);
-
-      if (linesCounter >= numberOfOutputLines) {
-        shell.kill();
-
-        const containers = await getContainers();
-
-        if (containers.some(cont => cont.CONTAINER_ID === id)) {
-          resolve(false);
-        } else {
-          resolve(true);
-        }
+      if (containers.some(cont => cont.CONTAINER_ID === id)) {
+        resolve(false);
+      } else {
+        resolve(true);
       }
     });
-
-    shell.write(cmd);
   });
 }
 
 
 function getContainers() {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/bin/bash");
-    const fileId = uuid.v4();
-    const path = __dirname + `/.containers_${fileId}.txt`;
-
-    let cmd;
-    if (dockerHosts.current === dockerHosts.hosts["localhost"]) {
-      cmd = `docker ps > ${path}\r`;
-    } else {
-      cmd = `docker -H ${dockerHosts.current.url} ps > ${path}\r`;
-    }
+    const shell = getShell("/usr/bin/docker", ["ps"]);
+    let output = "";
 
     shell.on("data", data => {
-      fs.access(path, fs.F_OK, err => {
-        if (err) return;
-
-        shell.kill();
-
-        fs.readFile(path, 'utf8', (err, data) => {
-          if (err) reject(err);
-
-          fs.unlink(path, err => {
-            if (err) reject(err);
-          });
-
-          let containers = data.split("\n").slice(1, -1);
-          containers = containers.map(c => {
-            let container = c.split(/\s\s+/);
-            container = {
-              CONTAINER_ID: container[0],
-              IMAGE: container[1],
-              COMMAND: container[2],
-              CREATED: container[3],
-              STATUS: container[4],
-              PORTS: container[5],
-              NAMES: container[6]
-            };
-
-            return container;
-          });
-
-          resolve(containers);
-        });
-      });
+      output += data;
     });
 
-    shell.write(cmd);
+    shell.on("exit", () => {
+      let containers = output.split("\r\n").slice(1, -1);
+      containers = containers.map(c => {
+        let container = c.split(/\s\s+/);
+        container = {
+          CONTAINER_ID: container[0],
+          IMAGE: container[1],
+          COMMAND: container[2],
+          CREATED: container[3],
+          STATUS: container[4],
+          PORTS: container[5],
+          NAMES: container[6]
+        };
+
+        return container;
+      });
+
+      resolve(containers);
+    });
   });
 }
 

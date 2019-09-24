@@ -1,67 +1,50 @@
-const uuid = require("uuid");
 const fs = require("fs");
 
 const {getShell} = require("./shellLib.js");
 const {startSession} = require("./sessions.js");
-const dockerHosts = require("../dockerHost.config.js");
 
 
 function getImages() {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/bin/bash");
-    const fileId = uuid.v4();
-    const path = __dirname + `/.images_${fileId}.txt`;
-
-    let cmd;
-    if (dockerHosts.current === dockerHosts.hosts["localhost"]) {
-      cmd = `docker images > ${path}\r`;
-    } else {
-      cmd = `docker -H ${dockerHosts.current.url} images > ${path}\r`;
-    }
+    const shell = getShell("/usr/bin/docker", ["images"]);
+    let output = "";
 
     shell.on("data", data => {
-      fs.access(path, fs.F_OK, err => {
-        if (err) return;
-
-        shell.kill();
-
-        fs.readFile(path, 'utf8', (err, data) => {
-          if (err) reject(err);
-
-          fs.unlink(path, err => {
-            if (err) reject(err);
-          });
-
-          let images = data.split("\n").slice(1, -1);
-          images = images.map(c => {
-            let image = c.split(/\s\s+/);
-            image = {
-              REPOSITORY: image[0],
-              TAG: image[1],
-              IMAGE_ID: image[2],
-              CREATED: image[3],
-              SIZE: image[4]
-            };
-
-            return image;
-          });
-
-          resolve(images);
-        });
-      });
+      output += data;
     });
 
-    shell.write(cmd);
+    shell.on("exit", () => {
+      let images = output.split("\r\n").slice(1, -1);
+      images = images.map(c => {
+        let image = c.split(/\s\s+/);
+        image = {
+          REPOSITORY: image[0],
+          TAG: image[1],
+          IMAGE_ID: image[2],
+          CREATED: image[3],
+          SIZE: image[4]
+        };
+
+        return image;
+      });
+
+      resolve(images);
+    });
   });
 }
 
 
 function buildImage(ws, sessions, name) {
   const logFileName = `./logs/BUILD_${name}_${Date.now()}.log`;
+  let output = "";
 
   const shellOnExit = () => {
     console.log(`${session.id}: exit`);
-    ws.send(`\nЛоги также лежат в файле ${logFileName}`);
+
+    fs.writeFile(logFileName, output, (err) => {
+      if (err) return console.log(err);
+      ws.send(`\nЛоги также лежат в файле ${logFileName}`);
+    });
   };
 
   const session = startSession(
@@ -72,8 +55,7 @@ function buildImage(ws, sessions, name) {
       shellOnExit);
 
   session.shell.on("data", data => {
-    fs.appendFile(logFileName, data, () => {
-    });
+    output += data;
   });
 }
 
