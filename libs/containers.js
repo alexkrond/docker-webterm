@@ -1,6 +1,3 @@
-const uuid = require("uuid");
-const fs = require("fs");
-
 const {getShell} = require("./shellLib.js");
 const {getImages} = require("./images.js");
 const {startSession} = require("./sessions.js");
@@ -45,52 +42,32 @@ function killContainer(id) {
 
 function getContainers() {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/bin/bash");
-    const fileId = uuid.v4();
-    const path = __dirname + `/.containers_${fileId}.txt`;
-
-    let cmd;
-    if (dockerHosts.current === dockerHosts.hosts["localhost"]) {
-      cmd = `docker ps > ${path}\r`;
-    } else {
-      cmd = `docker -H ${dockerHosts.current.url} ps > ${path}\r`;
-    }
+    const shell = getShell("/usr/bin/docker", ["ps"]);
+    let output = "";
 
     shell.on("data", data => {
-      fs.access(path, fs.F_OK, err => {
-        if (err) return;
-
-        shell.kill();
-
-        fs.readFile(path, 'utf8', (err, data) => {
-          if (err) reject(err);
-
-          fs.unlink(path, err => {
-            if (err) reject(err);
-          });
-
-          let containers = data.split("\n").slice(1, -1);
-          containers = containers.map(c => {
-            let container = c.split(/\s\s+/);
-            container = {
-              CONTAINER_ID: container[0],
-              IMAGE: container[1],
-              COMMAND: container[2],
-              CREATED: container[3],
-              STATUS: container[4],
-              PORTS: container[5],
-              NAMES: container[6]
-            };
-
-            return container;
-          });
-
-          resolve(containers);
-        });
-      });
+      output += data;
     });
 
-    shell.write(cmd);
+    shell.on("exit", () => {
+      let containers = output.split("\r\n").slice(1, -1);
+      containers = containers.map(c => {
+        let container = c.split(/\s\s+/);
+        container = {
+          CONTAINER_ID: container[0],
+          IMAGE: container[1],
+          COMMAND: container[2],
+          CREATED: container[3],
+          STATUS: container[4],
+          PORTS: container[5],
+          NAMES: container[6]
+        };
+
+        return container;
+      });
+
+      resolve(containers);
+    });
   });
 }
 
