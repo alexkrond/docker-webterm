@@ -214,7 +214,7 @@ function changeHost(host) {
   return async () => {
     const data = await fetch(`/shell/hosts/change/${host}`);
     const body = await data.json();
-    await updateHostsList();
+    await update();
 
     if (body.status === "OK") {
       return alert("Хост сменен");
