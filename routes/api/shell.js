@@ -3,10 +3,28 @@ const express = require("express");
 const {killSession} = require("../../libs/sessions.js");
 const {killContainer, getContainers, runContainer} = require("../../libs/containers.js");
 const {getImages} = require("../../libs/images.js");
+const dockerHosts = require("../../dockerHost.config.js");
+dockerHosts.current = dockerHosts.hosts["localhost"];
 
 
 function routerInit(sessions) {
   const router = express.Router();
+
+  router.get("/hosts", ((req, res) => {
+    res.json(dockerHosts);
+  }));
+
+  router.get("/hosts/change/:host", ((req, res) => {
+    if (dockerHosts.hosts.hasOwnProperty(req.params.host)) {
+      dockerHosts.current = dockerHosts.hosts[req.params.host];
+      res.json({
+        status: "OK",
+        msg: `Docker host switched to ${req.params.host} with url '${dockerHosts.current.url || "none"}'.`
+      })
+    } else {
+      res.json({status: "false", msg: `No host with name ${req.params.host}.`})
+    }
+  }));
 
   router.get("/sessions", (req, res) => {
     res.json(sessions.map(session => session.id));

@@ -1,12 +1,42 @@
 update().then(() => setInterval(update, 20000));
 
 async function update() {
+  await updateHostsList();
   await updateSessionsList();
   await updateContainersList();
   await updateImagesList();
   await updateDockerfilesList();
 }
 
+
+async function updateHostsList() {
+  const hostsList = document.querySelector(".hosts-list");
+  hostsList.innerHTML = "";
+  const hosts = await getHosts();
+
+  if (Object.keys(hosts.hosts).length === 0) {
+    hostsList.textContent = "Нет доступных хостов";
+  }
+
+  hostsList.textContent = `Текущий хост: ${hosts.current.name}`;
+
+  for (let host in hosts.hosts) {
+    if (hosts.hosts.hasOwnProperty(host)) {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+
+      btn.style.marginLeft = "20px";
+
+      li.textContent = hosts.hosts[host].name;
+      btn.textContent = "Сменить";
+
+      btn.onclick = changeHost(host);
+      li.appendChild(btn);
+
+      hostsList.appendChild(li);
+    }
+  }
+}
 
 async function updateSessionsList() {
   const sessionsList = document.querySelector(".sessions-list");
@@ -148,6 +178,14 @@ async function updateDockerfilesList() {
 }
 
 
+async function getHosts() {
+  const data = await fetch("/shell/hosts")
+      .catch(err => console.log(err));
+  const hosts = await data.json();
+
+  return hosts;
+}
+
 async function getSessions() {
   const data = await fetch("/shell/sessions")
       .catch(err => console.log(err));
@@ -170,6 +208,20 @@ async function getImages() {
   const images = await data.json();
 
   return images;
+}
+
+function changeHost(host) {
+  return async () => {
+    const data = await fetch(`/shell/hosts/change/${host}`);
+    const body = await data.json();
+    await update();
+
+    if (body.status === "OK") {
+      return alert("Хост сменен");
+    } else {
+      return alert("Хост не сменен");
+    }
+  };
 }
 
 function killSession(id) {
