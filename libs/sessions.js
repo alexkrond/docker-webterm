@@ -1,4 +1,5 @@
 const {getShell} = require("./shellLib.js");
+const dockerHosts = require("../dockerHost.config.js");
 
 
 function killSession(sessions, id) {
@@ -34,7 +35,8 @@ function startSession(ws, sessions, file, args, shellOnExit) {
   const newSession = {
     id: shell._pid.toString(),
     shell: shell,
-    ws: ws
+    ws: ws,
+    host: dockerHosts.current
   };
 
   ws.on("close", () => {
