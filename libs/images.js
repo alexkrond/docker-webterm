@@ -36,10 +36,15 @@ function getImages() {
 
 function buildImage(ws, sessions, name) {
   const logFileName = `./logs/BUILD_${name}_${Date.now()}.log`;
+  let output = "";
 
   const shellOnExit = () => {
     console.log(`${session.id}: exit`);
-    ws.send(`\nЛоги также лежат в файле ${logFileName}`);
+
+    fs.writeFile(logFileName, output, (err) => {
+      if (err) return console.log(err);
+      ws.send(`\nЛоги также лежат в файле ${logFileName}`);
+    });
   };
 
   const session = startSession(
@@ -50,8 +55,7 @@ function buildImage(ws, sessions, name) {
       shellOnExit);
 
   session.shell.on("data", data => {
-    fs.appendFile(logFileName, data, () => {
-    });
+    output += data;
   });
 }
 
