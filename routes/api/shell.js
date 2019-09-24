@@ -17,7 +17,10 @@ function routerInit(sessions) {
   router.get("/hosts/change/:host", ((req, res) => {
     if (dockerHosts.hosts.hasOwnProperty(req.params.host)) {
       dockerHosts.current = dockerHosts.hosts[req.params.host];
-      res.json({status: "OK", msg: `Docker host switched to ${req.params.host} with url ${dockerHosts.current || "none"}.`})
+      res.json({
+        status: "OK",
+        msg: `Docker host switched to ${req.params.host} with url '${dockerHosts.current.url || "none"}'.`
+      })
     } else {
       res.json({status: "false", msg: `No host with name ${req.params.host}.`})
     }
