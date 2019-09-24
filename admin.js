@@ -47,16 +47,16 @@ async function updateSessionsList() {
     sessionsList.textContent = "Нет активных сессий";
   }
 
-  sessions.forEach(id => {
+  sessions.forEach(session => {
     const li = document.createElement("li");
     const btn = document.createElement("button");
 
     btn.style.marginLeft = "20px";
 
-    li.textContent = id;
+    li.textContent = `${session.id} - host: ${session.host}`;
     btn.textContent = "Завершить";
 
-    btn.onclick = killSession(id);
+    btn.onclick = killSession(session.id);
     li.appendChild(btn);
 
     sessionsList.appendChild(li);

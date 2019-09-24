@@ -27,7 +27,7 @@ function routerInit(sessions) {
   }));
 
   router.get("/sessions", (req, res) => {
-    res.json(sessions.map(session => session.id));
+    res.json(sessions.map(session => ({id: session.id, host: session.host.name})));
   });
 
   router.get("/containers", async (req, res) => {
