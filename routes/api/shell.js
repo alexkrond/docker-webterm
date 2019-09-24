@@ -10,7 +10,11 @@ dockerHosts.current = dockerHosts.hosts["localhost"];
 function routerInit(sessions) {
   const router = express.Router();
 
-  router.get("/change_server/:host", ((req, res) => {
+  router.get("/hosts", ((req, res) => {
+    res.json(dockerHosts);
+  }));
+
+  router.get("/hosts/change/:host", ((req, res) => {
     if (dockerHosts.hosts.hasOwnProperty(req.params.host)) {
       dockerHosts.current = dockerHosts.hosts[req.params.host];
       res.json({status: "OK", msg: `Docker host switched to ${req.params.host} with url ${dockerHosts.current || "none"}.`})
