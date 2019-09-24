@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-apt-get update
+apt update
 
-apt-get install -y curl
+apt install -y curl
 curl -sL https://deb.nodesource.com/setup_10.x | bash -
 
-apt-get install -y nodejs build-essential wget nano
+apt install -y nodejs build-essential wget nano
 wget -O - https://get.docker.com | bash -
 
 npm install
