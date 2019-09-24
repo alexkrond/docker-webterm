@@ -4,12 +4,20 @@ const fs = require("fs");
 const {getShell} = require("./shellLib.js");
 const {getImages} = require("./images.js");
 const {startSession} = require("./sessions.js");
+const dockerHosts = require("../dockerHost.config.js");
 
 
 function killContainer(id) {
   return new Promise((resolve, reject) => {
     const shell = getShell("/bin/bash");
-    const cmd = `docker kill ${id}\r`;
+
+    let cmd;
+    if (dockerHosts.current === dockerHosts.hosts["localhost"]) {
+      cmd = `docker kill ${id}\r`;
+    } else {
+      cmd = `docker -H ${dockerHosts.current.url} kill ${id}\r`;
+    }
+
     const numberOfOutputLines = 4;
     let linesCounter = 0;
 
@@ -40,7 +48,13 @@ function getContainers() {
     const shell = getShell("/bin/bash");
     const fileId = uuid.v4();
     const path = __dirname + `/.containers_${fileId}.txt`;
-    const cmd = `docker ps > ${path}\r`;
+
+    let cmd;
+    if (dockerHosts.current === dockerHosts.hosts["localhost"]) {
+      cmd = `docker ps > ${path}\r`;
+    } else {
+      cmd = `docker -H ${dockerHosts.current.url} ps > ${path}\r`;
+    }
 
     shell.on("data", data => {
       fs.access(path, fs.F_OK, err => {

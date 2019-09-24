@@ -3,6 +3,7 @@ const fs = require("fs");
 
 const {getShell} = require("./shellLib.js");
 const {startSession} = require("./sessions.js");
+const dockerHosts = require("../dockerHost.config.js");
 
 
 function getImages() {
@@ -10,7 +11,13 @@ function getImages() {
     const shell = getShell("/bin/bash");
     const fileId = uuid.v4();
     const path = __dirname + `/.images_${fileId}.txt`;
-    const cmd = `docker images > ${path}\r`;
+
+    let cmd;
+    if (dockerHosts.current === dockerHosts.hosts["localhost"]) {
+      cmd = `docker images > ${path}\r`;
+    } else {
+      cmd = `docker -H ${dockerHosts.current.url} images > ${path}\r`;
+    }
 
     shell.on("data", data => {
       fs.access(path, fs.F_OK, err => {
