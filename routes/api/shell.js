@@ -10,25 +10,26 @@ dockerHosts.current = dockerHosts.hosts["localhost"];
 function routerInit(sessions) {
   const router = express.Router();
 
-  router.get("/hosts", ((req, res) => {
-    res.json(dockerHosts);
-  }));
-
-  router.get("/hosts/change/:host", ((req, res) => {
-    if (dockerHosts.hosts.hasOwnProperty(req.params.host)) {
-      dockerHosts.current = dockerHosts.hosts[req.params.host];
-      res.json({
-        status: "OK",
-        msg: `Docker host switched to ${req.params.host} with url '${dockerHosts.current.url || "none"}'.`
-      })
-    } else {
-      res.json({status: "false", msg: `No host with name ${req.params.host}.`})
-    }
-  }));
-
-  router.get("/sessions", (req, res) => {
-    res.json(sessions.map(session => ({id: session.id, host: session.host.name})));
+  router.use((req, res, next) => {
+    // console.log(req.originalUrl);
+    next();
   });
+
+  router.get("/", (req, res) => {
+    res.render("index");
+  });
+
+  // router.get("/hosts/change/:host", ((req, res) => {
+  //   if (dockerHosts.hosts.hasOwnProperty(req.params.host)) {
+  //     dockerHosts.current = dockerHosts.hosts[req.params.host];
+  //     res.json({
+  //       status: "OK",
+  //       msg: `Docker host switched to ${req.params.host} with url '${dockerHosts.current.url || "none"}'.`
+  //     })
+  //   } else {
+  //     res.json({status: "false", msg: `No host with name ${req.params.host}.`})
+  //   }
+  // }));
 
   router.get("/containers", async (req, res) => {
     const containers = await getContainers().catch(err => console.log(err));
@@ -66,6 +67,20 @@ function routerInit(sessions) {
     } else {
       res.json({status: "false", msg: `Container with image ${req.params.image} was not created.`});
     }
+  });
+
+  router.get("/containers/attach/:id", async (req, res) => {
+    const containers = await getContainers();
+
+    if (containers.some(cont => cont.CONTAINER_ID === req.params.id)) {
+      res.render("index");
+    } else {
+      res.json({status: "false", msg: `No container with id ${req.params.id}.`});
+    }
+  });
+
+  router.get("/images/build/:name", (req, res) => {
+    res.render("index");
   });
 
 
