@@ -5,6 +5,7 @@ const {routerInit} = require("./routes/api/shell.js");
 const {startSession} = require("./libs/sessions.js");
 const {containerAttach} = require("./libs/containers.js");
 const {buildImage} = require("./libs/images.js");
+const dockerHosts = require("./dockerHost.config.js");
 
 
 const app = express();
