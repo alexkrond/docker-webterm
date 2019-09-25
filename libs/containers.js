@@ -1,7 +1,6 @@
 const {getShell} = require("./shellLib.js");
 const {getImages} = require("./images.js");
 const {startSession} = require("./sessions.js");
-const dockerHosts = require("../dockerHost.config.js");
 
 
 function killContainer(id) {
@@ -57,44 +56,55 @@ function runContainer(imageName) {
   return new Promise(async (resolve, reject) => {
     const images = await getImages();
     if (!images.some(image => image.REPOSITORY === imageName)) {
-      resolve(false);
+      return resolve(false);
     }
 
     const shell = getShell("/usr/bin/docker", ["run", "-itd", imageName]);
     const regExp = /^([a-z]|\d){64}$/;
     const idLength = 64;
-    const secForCreating = 3;
-    let inProgress = false;
+    const secForChecking = 2;
+    const msecForInterval = 100;
+    let isChecking = false;
+    let output = "";
     let interval;
-    let timeStamp;
+    let timeEndCheck;
     let id;
 
     shell.on("data", async data => {
-      const str = data.replace("\r\n", "");
+      output += data;
+    });
 
-      if (str.length === idLength && regExp.test(str) && !inProgress) {
-        id = str.substr(0, 12);
+    shell.on("exit", () => {
+      const lines = output.split("\r\n");
 
-        timeStamp = new Date();
-        timeStamp.setSeconds(timeStamp.getSeconds() + secForCreating);
+      for (let i = lines.length - 1; i >= 0; i--) {
+        if (lines[i].length === idLength && regExp.test(lines[i])) {
+          id = lines[i].substr(0, 12);
 
-        inProgress = true;
-        interval = setInterval(check, 500);
+          timeEndCheck = new Date();
+          timeEndCheck.setSeconds(timeEndCheck.getSeconds() + secForChecking);
+
+          interval = setInterval(check, msecForInterval);
+          isChecking = true;
+          break;
+        }
+      }
+
+      if (!isChecking) {
+        return resolve(false);
       }
 
       async function check() {
-        if (new Date() > timeStamp) {
+        if (new Date() > timeEndCheck) {
           clearInterval(interval);
-          shell.kill();
-          resolve(false);
+          return resolve(false);
         }
 
         const containers = await getContainers();
 
         if (containers.some(cont => cont.CONTAINER_ID === id)) {
           clearInterval(interval);
-          shell.kill();
-          resolve(id);
+          return resolve(id);
         }
       }
     });
