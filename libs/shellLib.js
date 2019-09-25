@@ -16,5 +16,10 @@ function getShell(file, args = []) {
   return shell;
 }
 
+function checkHost(host) {
+  return dockerHosts.hosts.hasOwnProperty(host);
+}
+
 
 module.exports.getShell = getShell;
+module.exports.checkHost = checkHost;
