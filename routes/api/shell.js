@@ -3,33 +3,25 @@ const express = require("express");
 const {killSession} = require("../../libs/sessions.js");
 const {killContainer, getContainers, runContainer} = require("../../libs/containers.js");
 const {getImages} = require("../../libs/images.js");
-const dockerHosts = require("../../dockerHost.config.js");
-dockerHosts.current = dockerHosts.hosts["localhost"];
+const {checkHost} = require("../../libs/shellLib.js");
 
 
 function routerInit(sessions) {
   const router = express.Router();
 
   router.use((req, res, next) => {
-    // console.log(req.originalUrl);
+    if (!req.query.host) {
+      res.json({status: "false", msg: "No host specified."});
+    }
+    if (!checkHost(req.query.host)) {
+      res.json({status: "false", msg: `No host ${req.query.host}.`});
+    }
     next();
   });
 
   router.get("/", (req, res) => {
     res.render("index");
   });
-
-  // router.get("/hosts/change/:host", ((req, res) => {
-  //   if (dockerHosts.hosts.hasOwnProperty(req.params.host)) {
-  //     dockerHosts.current = dockerHosts.hosts[req.params.host];
-  //     res.json({
-  //       status: "OK",
-  //       msg: `Docker host switched to ${req.params.host} with url '${dockerHosts.current.url || "none"}'.`
-  //     })
-  //   } else {
-  //     res.json({status: "false", msg: `No host with name ${req.params.host}.`})
-  //   }
-  // }));
 
   router.get("/containers", async (req, res) => {
     const containers = await getContainers().catch(err => console.log(err));
