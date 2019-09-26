@@ -28,7 +28,6 @@ app.get("/", (req, res) => {
 
 
 expressWs.app.ws('/shell', (ws, req) => {
-  console.log(req);
   startSession(ws, sessions, req.query.host, "/usr/bin/docker", ["run", "-it", "nginx", "bash"]);
 });
 
