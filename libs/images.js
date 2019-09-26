@@ -4,9 +4,9 @@ const {getShell} = require("./shellLib.js");
 const {startSession} = require("./sessions.js");
 
 
-function getImages() {
+function getImages(host) {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/usr/bin/docker", ["images"]);
+    const shell = getShell(host, "/usr/bin/docker", ["images"]);
     let output = "";
 
     shell.on("data", data => {
