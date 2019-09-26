@@ -1,20 +1,19 @@
 const express = require("express");
 
-const {killSession} = require("../../libs/sessions.js");
 const {killContainer, getContainers, runContainer} = require("../../libs/containers.js");
 const {getImages} = require("../../libs/images.js");
 const {checkHost} = require("../../libs/shellLib.js");
 
 
-function routerInit(sessions) {
+function hostShellRouterInit(sessions) {
   const router = express.Router();
 
   router.use((req, res, next) => {
     if (!req.query.host) {
-      res.json({status: "false", msg: "No host specified."});
+      return res.json({status: "false", msg: "No host specified."});
     }
     if (!checkHost(req.query.host)) {
-      res.json({status: "false", msg: `No host ${req.query.host}.`});
+      return res.json({status: "false", msg: `No host ${req.query.host}.`});
     }
     next();
   });
@@ -24,21 +23,13 @@ function routerInit(sessions) {
   });
 
   router.get("/containers", async (req, res) => {
-    const containers = await getContainers().catch(err => console.log(err));
+    const containers = await getContainers(req.query.host).catch(err => console.log(err));
     res.json(containers);
   });
 
   router.get("/images", async (req, res) => {
-    const images = await getImages().catch(err => console.log(err));
+    const images = await getImages(req.query.host).catch(err => console.log(err));
     res.json(images);
-  });
-
-  router.get("/sessions/kill/:id", (req, res) => {
-    if (killSession(sessions, req.params.id)) {
-      res.json({status: "OK", msg: `Terminal with pid ${req.params.id} was killed.`});
-    } else {
-      res.json({status: "false", msg: `No terminal with pid ${req.params.id}.`});
-    }
   });
 
   router.get("/containers/kill/:id", async (req, res) => {
@@ -80,4 +71,4 @@ function routerInit(sessions) {
 }
 
 
-module.exports.routerInit = routerInit;
+module.exports.hostShellRouterInit = hostShellRouterInit;

@@ -1,11 +1,11 @@
 const express = require("express");
 const exphbs = require("express-handlebars");
 
-const {routerInit} = require("./routes/api/shell.js");
+const {allHostsShellRouterInit} = require("./routes/api/allHostsShell.js");
+const {hostShellRouterInit} = require("./routes/api/hostShell.js");
 const {startSession} = require("./libs/sessions.js");
 const {containerAttach} = require("./libs/containers.js");
 const {buildImage} = require("./libs/images.js");
-const dockerHosts = require("./dockerHost.config.js");
 
 
 const app = express();
@@ -26,14 +26,6 @@ app.get("/", (req, res) => {
   res.render("admin");
 });
 
-app.get("/shell/hosts", ((req, res) => {
-  res.json(dockerHosts);
-}));
-
-app.get("/shell/all-sessions", (req, res) => {
-  res.json(sessions.map(session => ({id: session.id, host: session.host.name})));
-});
-
 
 expressWs.app.ws('/shell', (ws, req) => {
   startSession(ws, sessions, "/usr/bin/docker", ["run", "-it", "nginx", "bash"]);
@@ -48,7 +40,8 @@ expressWs.app.ws('/shell/images/build/:name', (ws, req) => {
 });
 
 
-app.use("/shell", routerInit(sessions));
+app.use("/shell", allHostsShellRouterInit(sessions));
+app.use("/shell", hostShellRouterInit(sessions));
 app.use(express.static(__dirname));
 
 
