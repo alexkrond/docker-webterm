@@ -20,8 +20,8 @@ function killSession(sessions, id) {
 }
 
 
-function startSession(ws, sessions, file, args, shellOnExit) {
-  const shell = getShell(file, args);
+function startSession(ws, sessions, host, file, args, shellOnExit) {
+  const shell = getShell(host, file, args);
 
   shell.on('data', (data) => {
     ws.send(data);
@@ -35,7 +35,7 @@ function startSession(ws, sessions, file, args, shellOnExit) {
     id: shell._pid.toString(),
     shell: shell,
     ws: ws,
-    host: "host" // TODO
+    host: host
   };
 
   ws.on("close", () => {

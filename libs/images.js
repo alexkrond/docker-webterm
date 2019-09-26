@@ -34,7 +34,7 @@ function getImages(host) {
 }
 
 
-function buildImage(ws, sessions, name) {
+function buildImage(ws, sessions, host, name) {
   const logFileName = `./logs/BUILD_${name}_${Date.now()}.log`;
   let output = "";
 
@@ -50,6 +50,7 @@ function buildImage(ws, sessions, name) {
   const session = startSession(
       ws,
       sessions,
+      host,
       "/usr/bin/docker",
       ["build", "-f", "Dockerfile_test", "-t", name, "./"],
       shellOnExit);

@@ -28,15 +28,16 @@ app.get("/", (req, res) => {
 
 
 expressWs.app.ws('/shell', (ws, req) => {
-  startSession(ws, sessions, "/usr/bin/docker", ["run", "-it", "nginx", "bash"]);
+  console.log(req);
+  startSession(ws, sessions, req.query.host, "/usr/bin/docker", ["run", "-it", "nginx", "bash"]);
 });
 
 expressWs.app.ws('/shell/containers/attach/:id', (ws, req) => {
-  containerAttach(ws, sessions, req.params.id);
+  containerAttach(ws, sessions, req.query.host, req.params.id);
 });
 
 expressWs.app.ws('/shell/images/build/:name', (ws, req) => {
-  buildImage(ws, sessions, req.params.name);
+  buildImage(ws, sessions, req.query.host, req.params.name);
 });
 
 

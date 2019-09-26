@@ -33,7 +33,7 @@ function hostShellRouterInit(sessions) {
   });
 
   router.get("/containers/kill/:id", async (req, res) => {
-    const isKilled = await killContainer(req.params.id);
+    const isKilled = await killContainer(req.query.host, req.params.id);
 
     if (isKilled) {
       res.json({status: "OK", msg: `Container with id ${req.params.id} was killed.`});
@@ -43,7 +43,7 @@ function hostShellRouterInit(sessions) {
   });
 
   router.get("/containers/run/:image", async (req, res) => {
-    const id = await runContainer(req.params.image);
+    const id = await runContainer(req.query.host, req.params.image);
 
     if (id) {
       res.json({status: "OK", id: id, msg: `Container with image ${req.params.image} was created.`});
@@ -53,7 +53,7 @@ function hostShellRouterInit(sessions) {
   });
 
   router.get("/containers/attach/:id", async (req, res) => {
-    const containers = await getContainers();
+    const containers = await getContainers(req.query.host);
 
     if (containers.some(cont => cont.CONTAINER_ID === req.params.id)) {
       res.render("index");
