@@ -1,6 +1,10 @@
 const {getShell} = require("./shellLib.js");
 
 
+function getSessionsForHost(sessions, host) {
+  return sessions.filter(session => session.host === host);
+}
+
 function killSession(sessions, id) {
   let isKilled = false;
 
@@ -56,3 +60,4 @@ function startSession(ws, sessions, host, file, args, shellOnExit) {
 
 module.exports.killSession = killSession;
 module.exports.startSession = startSession;
+module.exports.getSessionsForHost = getSessionsForHost;
