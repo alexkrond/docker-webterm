@@ -2,9 +2,9 @@ const pty = require("node-pty");
 const dockerHosts = require("../dockerHost.config.js");
 
 
-function getShell(file, args = []) {
-  if (file.indexOf("docker") !== -1 && dockerHosts.current !== dockerHosts.hosts["localhost"]) {
-    args.unshift("-H", dockerHosts.current.url);
+function getShell(host, file, args = []) {
+  if (file.indexOf("docker") !== -1 && host !== "localhost") {
+    args.unshift("-H", host);
   }
 
   const shell = pty.spawn(file, args, {
@@ -17,7 +17,7 @@ function getShell(file, args = []) {
 }
 
 function checkHost(host) {
-  return dockerHosts.hosts.hasOwnProperty(host);
+  return dockerHosts.hasOwnProperty(host);
 }
 
 
