@@ -20,9 +20,9 @@ function killContainer(id) {
 }
 
 
-function getContainers() {
+function getContainers(host) {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/usr/bin/docker", ["ps"]);
+    const shell = getShell(host, "/usr/bin/docker", ["ps"]);
     let output = "";
 
     shell.on("data", data => {
