@@ -7,7 +7,7 @@ term.open(document.getElementById('terminal'));
 
 const protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://';
 const port = location.port ? `:${location.port}` : '';
-const socketUrl = `${protocol}${location.hostname}${port}${location.pathname}`;
+const socketUrl = `${protocol}${location.hostname}${port}${location.pathname}${location.search}`;
 const socket = new WebSocket(socketUrl);
 
 socket.onclose = () => {
