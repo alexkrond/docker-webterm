@@ -14,24 +14,22 @@ async function updateHostsList() {
   hostsList.innerHTML = "";
   const hosts = await getHosts();
 
-  if (Object.keys(hosts.hosts).length === 0) {
+  if (Object.keys(hosts).length === 0) {
     hostsList.textContent = "Нет доступных хостов";
   }
 
-  hostsList.textContent = `Текущий хост: ${hosts.current.name}`;
-
-  for (let host in hosts.hosts) {
-    if (hosts.hosts.hasOwnProperty(host)) {
+  for (let host in hosts) {
+    if (hosts.hasOwnProperty(host)) {
       const li = document.createElement("li");
-      const btn = document.createElement("button");
+      // const btn = document.createElement("button");
 
-      btn.style.marginLeft = "20px";
+      // btn.style.marginLeft = "20px";
 
-      li.textContent = hosts.hosts[host].name;
-      btn.textContent = "Сменить";
+      li.textContent = hosts[host].name;
+      // btn.textContent = "Сменить";
 
-      btn.onclick = changeHost(host);
-      li.appendChild(btn);
+      // btn.onclick = changeHost(host);
+      // li.appendChild(btn);
 
       hostsList.appendChild(li);
     }
@@ -187,7 +185,7 @@ async function getHosts() {
 }
 
 async function getSessions() {
-  const data = await fetch("/shell/sessions")
+  const data = await fetch("/shell/all-sessions")
       .catch(err => console.log(err));
   const sessions = await data.json();
 
@@ -195,7 +193,7 @@ async function getSessions() {
 }
 
 async function getContainers() {
-  const data = await fetch("/shell/containers")
+  const data = await fetch("/shell/containers?host=localhost")
       .catch(err => console.log(err));
   const containers = await data.json();
 
@@ -203,26 +201,26 @@ async function getContainers() {
 }
 
 async function getImages() {
-  const data = await fetch("/shell/images")
+  const data = await fetch("/shell/images?host=localhost")
       .catch(err => console.log(err));
   const images = await data.json();
 
   return images;
 }
 
-function changeHost(host) {
-  return async () => {
-    const data = await fetch(`/shell/hosts/change/${host}`);
-    const body = await data.json();
-    await update();
-
-    if (body.status === "OK") {
-      return alert("Хост сменен");
-    } else {
-      return alert("Хост не сменен");
-    }
-  };
-}
+// function changeHost(host) {
+//   return async () => {
+//     const data = await fetch(`/shell/hosts/change/${host}`);
+//     const body = await data.json();
+//     await update();
+//
+//     if (body.status === "OK") {
+//       return alert("Хост сменен");
+//     } else {
+//       return alert("Хост не сменен");
+//     }
+//   };
+// }
 
 function killSession(id) {
   return async () => {
@@ -234,7 +232,7 @@ function killSession(id) {
 
 function killContainer(id) {
   return async () => {
-    const data = await fetch(`/shell/containers/kill/${id}`);
+    const data = await fetch(`/shell/containers/kill/${id}?host=localhost`);
     await updateSessionsList();
     await updateContainersList();
   };
@@ -242,7 +240,7 @@ function killContainer(id) {
 
 function runContainer(image) {
   return async () => {
-    const data = await fetch(`/shell/containers/run/${image}`);
+    const data = await fetch(`/shell/containers/run/${image}?host=localhost`);
     const body = await data.json();
 
     if (body.status === "OK") {
@@ -255,12 +253,12 @@ function runContainer(image) {
 
 function containerAttach(id) {
   return () => {
-    window.open(`/shell/containers/attach/${id}`);
+    window.open(`/shell/containers/attach/${id}?host=localhost`);
   };
 }
 
 function buildImage(name) {
   return () => {
-    window.open(`/shell/images/build/${name}`);
+    window.open(`/shell/images/build/${name}?host=localhost`);
   };
 }

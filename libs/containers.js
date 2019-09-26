@@ -3,12 +3,12 @@ const {getImages} = require("./images.js");
 const {startSession} = require("./sessions.js");
 
 
-function killContainer(id) {
+function killContainer(host, id) {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/usr/bin/docker", ["kill", id]);
+    const shell = getShell(host, "/usr/bin/docker", ["kill", id]);
 
     shell.on("exit", async () => {
-      const containers = await getContainers();
+      const containers = await getContainers(host);
 
       if (containers.some(cont => cont.CONTAINER_ID === id)) {
         resolve(false);
@@ -20,9 +20,9 @@ function killContainer(id) {
 }
 
 
-function getContainers() {
+function getContainers(host) {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/usr/bin/docker", ["ps"]);
+    const shell = getShell(host, "/usr/bin/docker", ["ps"]);
     let output = "";
 
     shell.on("data", data => {
@@ -52,14 +52,14 @@ function getContainers() {
 }
 
 
-function runContainer(imageName) {
+function runContainer(host, imageName) {
   return new Promise(async (resolve, reject) => {
-    const images = await getImages();
+    const images = await getImages(host);
     if (!images.some(image => image.REPOSITORY === imageName)) {
       return resolve(false);
     }
 
-    const shell = getShell("/usr/bin/docker", ["run", "-itd", imageName]);
+    const shell = getShell(host, "/usr/bin/docker", ["run", "-itd", imageName]);
     const regExp = /^([a-z]|\d){64}$/;
     const idLength = 64;
     const secForChecking = 2;
@@ -100,7 +100,7 @@ function runContainer(imageName) {
           return resolve(false);
         }
 
-        const containers = await getContainers();
+        const containers = await getContainers(host);
 
         if (containers.some(cont => cont.CONTAINER_ID === id)) {
           clearInterval(interval);
@@ -112,8 +112,8 @@ function runContainer(imageName) {
 }
 
 
-function containerAttach(ws, sessions, id) {
-  startSession(ws, sessions, "/usr/bin/docker", ["exec", "-it", id, "bash"]);
+function containerAttach(ws, sessions, host, id) {
+  startSession(ws, sessions, host, "/usr/bin/docker", ["exec", "-it", id, "bash"]);
 }
 
 

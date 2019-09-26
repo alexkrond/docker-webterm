@@ -4,9 +4,9 @@ const {getShell} = require("./shellLib.js");
 const {startSession} = require("./sessions.js");
 
 
-function getImages() {
+function getImages(host) {
   return new Promise((resolve, reject) => {
-    const shell = getShell("/usr/bin/docker", ["images"]);
+    const shell = getShell(host, "/usr/bin/docker", ["images"]);
     let output = "";
 
     shell.on("data", data => {
@@ -34,7 +34,7 @@ function getImages() {
 }
 
 
-function buildImage(ws, sessions, name) {
+function buildImage(ws, sessions, host, name) {
   const logFileName = `./logs/BUILD_${name}_${Date.now()}.log`;
   let output = "";
 
@@ -50,6 +50,7 @@ function buildImage(ws, sessions, name) {
   const session = startSession(
       ws,
       sessions,
+      host,
       "/usr/bin/docker",
       ["build", "-f", "Dockerfile_test", "-t", name, "./"],
       shellOnExit);
