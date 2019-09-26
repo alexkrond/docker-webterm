@@ -2,29 +2,30 @@ import React from "react"
 import HostColumn from "./HostColumn.js"
 
 
-class TableHosts extends React.Component{
+class TableHosts extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {columns: []};
   }
 
-  componentDidMount() {
-    (async () => {
-      const data = await fetch("/shell/hosts").catch(err => console.error(err));
-      const body = await data.json();
+  async componentDidMount() {
+    const data = await fetch("/shell/hosts").catch(err => console.error(err));
+    const body = await data.json();
 
-      this.column = [];
-      for (let host in body) {
-        if (body.hasOwnProperty(host)) {
-          this.column.push(<HostColumn hostName={host} />);
-        }
+    let columns = [];
+    for (let host in body) {
+      if (body.hasOwnProperty(host)) {
+        columns.push(host);
       }
-    })();
+    }
+
+    this.setState({columns: columns});
   }
 
   render() {
     return (
         <div>
-          {this.hosts}
+          {this.state.columns.map(host => <HostColumn key={host} hostName={host} />)}
         </div>
     );
   }
