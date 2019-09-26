@@ -8,7 +8,7 @@ function killContainer(host, id) {
     const shell = getShell(host, "/usr/bin/docker", ["kill", id]);
 
     shell.on("exit", async () => {
-      const containers = await getContainers();
+      const containers = await getContainers(host);
 
       if (containers.some(cont => cont.CONTAINER_ID === id)) {
         resolve(false);
@@ -100,7 +100,7 @@ function runContainer(host, imageName) {
           return resolve(false);
         }
 
-        const containers = await getContainers();
+        const containers = await getContainers(host);
 
         if (containers.some(cont => cont.CONTAINER_ID === id)) {
           clearInterval(interval);
