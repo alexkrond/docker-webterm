@@ -1,10 +1,21 @@
 import React from "react"
+import SessionList from "./SessionList.js"
 
 
-class HostColumn extends React.Component{
+class HostColumn extends React.Component {
+  constructor(props) {
+    super(props);
+    this.host = this.props.hostName;
+    this.style = {
+      display: "inline-block"
+    };
+  }
+
   render() {
     return (
-        <h1>{this.props.hostName}</h1>
+        <div style={this.style}>
+          <SessionList hostName={this.host} />
+        </div>
     );
   }
 }
