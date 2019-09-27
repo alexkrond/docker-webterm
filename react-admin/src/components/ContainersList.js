@@ -30,7 +30,7 @@ class ContainersList extends React.Component {
 
   render() {
     return (
-        <div style={this.style} className="containers">
+        <div className="containers">
           <h3>Container List</h3>
           <ul className="container-list">
             {this.state.containers.length ?
