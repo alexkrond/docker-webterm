@@ -23,7 +23,7 @@ class Image extends React.Component {
   }
 
   async runContainer() {
-    const data = await fetch(`/shell/containers/run/${this.name}?host=localhost`);
+    const data = await fetch(`/shell/containers/run/${this.name}?host=${this.host}`);
     const body = await data.json();
 
     if (body.status === "OK") {
