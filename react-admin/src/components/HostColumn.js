@@ -2,6 +2,7 @@ import React from "react"
 import SessionList from "./SessionList.js"
 import ContainersList from "./ContainersList.js"
 import ImageList from "./ImageList.js"
+import DockerfileList from "./DockerfileList.js"
 
 
 class HostColumn extends React.Component {
@@ -19,6 +20,7 @@ class HostColumn extends React.Component {
           <SessionList hostName={this.host} />
           <ContainersList hostName={this.host} />
           <ImageList hostName={this.host} />
+          <DockerfileList hostName={this.host} />
         </div>
     );
   }
