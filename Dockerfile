@@ -15,7 +15,6 @@ COPY ./libs ./libs
 COPY ./routes ./routes
 COPY ./views ./views
 
-COPY ./admin.js ./admin.js
 COPY ./app.js ./app.js
 COPY ./Dockerfile_test ./Dockerfile_test
 COPY ./dockerHost.config.js ./dockerHost.config.js
@@ -23,6 +22,4 @@ COPY ./index.js ./index.js
 
 RUN mkdir -p ./logs
 
-WORKDIR /
-
-CMD node /app/app.js
+CMD node app.js
