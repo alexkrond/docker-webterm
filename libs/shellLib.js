@@ -4,7 +4,7 @@ const dockerHosts = require("../dockerHost.config.js");
 
 function getShell(host, file, args = []) {
   if (file.indexOf("docker") !== -1 && host !== "localhost") {
-    args.unshift("-H", host);
+    args.unshift("-H", dockerHosts[host].url);
   }
 
   const shell = pty.spawn(file, args, {
