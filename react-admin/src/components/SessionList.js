@@ -8,9 +8,20 @@ class SessionList extends React.Component {
     super(props);
     this.host = this.props.hostName;
     this.state = {sessions: []};
+
+    this.updateSessions = this.updateSessions.bind(this);
   }
 
   async componentDidMount() {
+    await this.updateSessions();
+    this.interval = setInterval(this.updateSessions, 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
+  }
+
+  async updateSessions() {
     const data = await fetch(`/shell/sessions?host=${this.host}`).catch(err => console.error(err));
     const body = await data.json();
 
@@ -19,9 +30,13 @@ class SessionList extends React.Component {
 
   render() {
     return (
-        <div style={this.style}>
-          {this.state.sessions.length ? this.state.sessions.map(session => <Session key={session.id} info={session}/>) :
-              <Cap text={"Тут будут сессии"}/>}
+        <div className="sessions">
+          <h3>Session List</h3>
+          <ul className="session-list">
+            {this.state.sessions.length ?
+                this.state.sessions.map(session => <Session key={session.id} info={session}/>) :
+                <Cap text={"Тут будут сессии"}/>}
+          </ul>
         </div>
     );
   }
