@@ -3,6 +3,7 @@ const express = require("express");
 const {killContainer, getContainers, runContainer} = require("../../libs/containers.js");
 const {getImages} = require("../../libs/images.js");
 const {checkHost} = require("../../libs/shellLib.js");
+const {getSessionsForHost} = require("../../libs/sessions.js");
 
 
 function hostShellRouterInit(sessions) {
@@ -20,6 +21,11 @@ function hostShellRouterInit(sessions) {
 
   router.get("/", (req, res) => {
     res.render("index");
+  });
+
+  router.get("/sessions", (req, res) => {
+    const ss = getSessionsForHost(sessions, req.query.host);
+    res.json(ss.map(session => ({id: session.id, host: session.host.name})));
   });
 
   router.get("/containers", async (req, res) => {
