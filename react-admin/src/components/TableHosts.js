@@ -5,27 +5,31 @@ import HostColumn from "./HostColumn.js"
 class TableHosts extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {columns: []};
+    this.state = {hosts: []};
+
+    this.style = {
+      display: "flex"
+    };
   }
 
   async componentDidMount() {
     const data = await fetch("/shell/hosts").catch(err => console.error(err));
     const body = await data.json();
 
-    let columns = [];
-    for (let host in body) {
-      if (body.hasOwnProperty(host)) {
-        columns.push(host);
+    let hosts = [];
+    for (let hostName in body) {
+      if (body.hasOwnProperty(hostName)) {
+        hosts.push({hostName: hostName, host: body[hostName].name, url: body[hostName].url});
       }
     }
 
-    this.setState({columns: columns});
+    this.setState({hosts: hosts});
   }
 
   render() {
     return (
-        <div>
-          {this.state.columns.map(host => <HostColumn key={host} hostName={host} />)}
+        <div style={this.style}>
+          {this.state.hosts.map(host => <HostColumn key={host.hostName} host={host} />)}
         </div>
     );
   }
